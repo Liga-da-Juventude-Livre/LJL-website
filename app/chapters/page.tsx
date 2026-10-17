@@ -8,7 +8,7 @@ import { getPublicChapterInfo } from "@/modules/chapter-requests/queries";
 import { InterestForm } from "@/modules/chapter-requests/ui/interest-form";
 
 export const metadata: Metadata = {
-  title: "Diretórios · Liga da Juventude Livre",
+  title: "Diretórios",
   description: "Abra um diretório da Liga da Juventude Livre na sua universidade: passo a passo, roteiro do primeiro encontro e formulário de interesse.",
 };
 

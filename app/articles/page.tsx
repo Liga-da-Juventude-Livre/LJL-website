@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/dates";
 import { listPublishedArticles } from "@/modules/posts/public";
 
 export const metadata: Metadata = {
-  title: "Artigos · Liga da Juventude Livre",
+  title: "Artigos",
   description: "Artigos escritos por estudantes da Liga da Juventude Livre sobre economia, instituições, educação, direito e filosofia.",
 };
 

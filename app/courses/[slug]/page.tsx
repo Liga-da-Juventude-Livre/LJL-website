@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const course = await getPublishedCourse((await params).slug).catch(() => null);
-  return course ? { title: `${course.title} · Liga da Juventude Livre`, description: course.summary } : {};
+  return course ? { title: course.title, description: course.summary } : {};
 }
 
 // hero white · lessons green · footer white

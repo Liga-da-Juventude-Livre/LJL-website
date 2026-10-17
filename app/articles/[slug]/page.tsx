@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const a = await getPublishedArticle((await params).slug).catch(() => null);
   return a
-    ? { title: `${a.title} · Liga da Juventude Livre`, description: a.excerpt || undefined, openGraph: a.coverUrl ? { images: [a.coverUrl] } : undefined }
+    ? { title: a.title, description: a.excerpt || undefined, openGraph: a.coverUrl ? { images: [a.coverUrl] } : undefined }
     : {};
 }
 

@@ -8,7 +8,7 @@ import { RevealObserver, Words } from "@/components/Reveal";
 import { getPublicBooks } from "@/modules/books/public";
 
 export const metadata: Metadata = {
-  title: "Biblioteca · Liga da Juventude Livre",
+  title: "Biblioteca",
   description: "Livros recomendados pela Liga da Juventude Livre para entender a liberdade, e edições gratuitas para baixar.",
 };
 

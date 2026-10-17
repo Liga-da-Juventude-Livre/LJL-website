@@ -8,7 +8,7 @@ import { contactEmail } from "@/content/site";
 import { normalizeCode } from "@/modules/certificates/codes";
 
 export const metadata: Metadata = {
-  title: "Verificar certificado · Liga da Juventude Livre",
+  title: "Verificar certificado",
   description: "Confira se um certificado da Liga da Juventude Livre é verdadeiro.",
   robots: { index: false, follow: false },
 };

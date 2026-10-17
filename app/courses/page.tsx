@@ -8,7 +8,7 @@ import { KINDS } from "@/modules/courses/labels";
 import { listPublishedCourses } from "@/modules/courses/queries";
 
 export const metadata: Metadata = {
-  title: "Cursos e trilhas · Liga da Juventude Livre",
+  title: "Cursos e trilhas",
   description: "Trilhas de leitura e cursos da Liga da Juventude Livre, para estudar no seu ritmo ou em grupo, sem precisar de cadastro.",
 };
 

@@ -33,8 +33,18 @@ function SectionHead({ kicker, title, children }: { kicker: string; title: strin
 const mailto = (subject: string) => `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}`;
 
 export default function Home() {
+  const site = process.env.SITE_URL?.replace(/\/+$/, "");
+  const organization = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Liga da Juventude Livre",
+    ...(site ? { url: site, logo: `${site}/icons/icon-512.png` } : {}),
+    email: contactEmail,
+    description: "Movimento estudantil apartidário pela liberdade econômica, pelo Estado de Direito e pela livre circulação de ideias.",
+  };
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization).replace(/</g, "\\u003c") }} />
       <a className="skip" href="#content">
         Pular para o conteúdo
       </a>

@@ -11,7 +11,7 @@ import { getCertificateByCode } from "@/modules/certificates/queries";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Verificar certificado · Liga da Juventude Livre",
+  title: "Verificar certificado",
   robots: { index: false, follow: false },
 };
 
