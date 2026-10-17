@@ -1,0 +1,423 @@
+// Data model of the Liga's system. Tables are plural snake_case; columns keep Prisma's camelCase.
+// Conventions: ids are cuid strings, every table has createdAt, mutable ones have updatedAt,
+// and people are never hard-linked to content (deleting a user keeps what they wrote).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────── enums ─────────────
+
+/// What a dashboard user may do. ADMIN: everything, including users. EDITOR: all content and publishing.
+/// AUTHOR: writes posts, can only save drafts and send them to review.
+enum Role {
+  ADMIN
+  EDITOR
+  AUTHOR
+
+  @@map("role")
+}
+
+/// Lifecycle of anything publishable.
+enum PublishStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  ARCHIVED
+
+  @@map("publish_status")
+}
+
+enum PostType {
+  ARTICLE
+  NEWS
+
+  @@map("post_type")
+}
+
+/// Where a chapter request stands. Only CONTACTED and STARTED count as public "interest": a human has answered them.
+enum RequestStatus {
+  NEW
+  CONTACTED
+  STARTED
+  ARCHIVED
+
+  @@map("request_status")
+}
+
+/// A reading track is a course whose lessons are readings; both share one structure.
+enum CourseKind {
+  TRACK
+  COURSE
+
+  @@map("course_kind")
+}
+
+/// COMPLETION: finished a course. PARTICIPATION: took part in an activity (event, debate, study group).
+enum CertificateKind {
+  COMPLETION
+  PARTICIPATION
+
+  @@map("certificate_kind")
+}
+
+enum BookLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+
+  @@map("book_level")
+}
+
+// ───────────── people and access ─────────────
+
+/// Someone who can log into the dashboard. Members of the Liga who only read the site do not need a row here.
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  name               String
+  passwordHash       String
+  role               Role      @default(AUTHOR)
+  active             Boolean   @default(true)
+  /// Set when an admin creates the account with a temporary password; cleared on the first password change.
+  mustChangePassword Boolean   @default(false)
+  failedLogins       Int       @default(0)
+  lockedUntil        DateTime?
+  lastLoginAt        DateTime?
+  chapterId          String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  chapter         Chapter?         @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  sessions        Session[]
+  posts           Post[]
+  books           Book[]
+  events          Event[]
+  activities      ActivityLog[]
+  handledRequests ChapterRequest[]
+  courses         Course[]
+  certificates    Certificate[]
+
+  @@index([chapterId])
+  @@map("users")
+}
+
+/// Server-side login session. The browser holds a random token; only its SHA-256 hash is stored here,
+/// so a leaked table cannot be replayed as cookies, and deleting a row logs that device out.
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ───────────── organisation ─────────────
+
+/// A diretório: the Liga's unit inside a university. PUC-Rio is the first.
+model Chapter {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  name         String
+  university   String
+  city         String
+  state        String? // two-letter UF
+  description  String?
+  contactEmail String?
+  foundedAt    DateTime?
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  users  User[]
+  posts  Post[]
+  events Event[]
+
+  @@map("chapters")
+}
+
+/// A frente de atuação (Economia, Instituições…). The shared taxonomy for posts and books.
+model Front {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  summary   String
+  /// "Para o debate" question shown on the site.
+  question  String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts   Post[]
+  books   Book[]
+  courses Course[]
+
+  @@map("fronts")
+}
+
+// ───────────── content ─────────────
+
+/// An article (written by students) or a news item (from the Liga). Same lifecycle, different public pages,
+/// so one table with a type. Body is Markdown.
+model Post {
+  id          String        @id @default(cuid())
+  type        PostType
+  slug        String
+  title       String
+  excerpt     String
+  body        String
+  status      PublishStatus @default(DRAFT)
+  /// Set the first time the post is published; used for ordering and the byline date.
+  publishedAt DateTime?
+  /// Byline as shown on the site. May differ from the dashboard user who typed it in.
+  authorName  String
+  /// Cover image: public address of the file in Vercel Blob. Null = no cover.
+  coverUrl    String?
+  createdById String?
+  frontId     String?
+  chapterId   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  createdBy User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  front     Front?   @relation(fields: [frontId], references: [id], onDelete: SetNull)
+  chapter   Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+
+  @@unique([type, slug])
+  @@index([type, status, publishedAt(sort: Desc)])
+  @@index([createdById])
+  @@index([frontId])
+  @@map("posts")
+}
+
+/// A recommended book. Free editions live in BookDownload and only exist for authorised sources.
+model Book {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  author      String
+  year        Int
+  level       BookLevel @default(BEGINNER)
+  /// Why we recommend it, one or two sentences.
+  note        String
+  /// Shown in "Por onde começar".
+  featured    Boolean   @default(false)
+  published   Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  /// Uploaded cover (Vercel Blob address). Null = use the file in assets/books/covers or the typeset cover.
+  coverUrl    String?
+  frontId     String
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  front     Front          @relation(fields: [frontId], references: [id], onDelete: Restrict)
+  createdBy User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  downloads BookDownload[]
+  lessons   Lesson[]
+
+  @@index([frontId])
+  @@index([published, featured])
+  @@map("books")
+}
+
+/// A free, publisher-authorised edition of a book. `verifiedAt` records when someone last confirmed
+/// the link still works and is offered free by the rightsholder; unverified links should not be shown.
+model BookDownload {
+  id         String    @id @default(cuid())
+  bookId     String
+  url        String
+  language   String
+  source     String
+  edition    String
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([bookId])
+  @@map("book_downloads")
+}
+
+/// A debate, seminar or meeting, optionally tied to a diretório.
+model Event {
+  id              String        @id @default(cuid())
+  slug            String        @unique
+  title           String
+  description     String
+  startsAt        DateTime
+  endsAt          DateTime?
+  location        String?
+  onlineUrl       String?
+  registrationUrl String?
+  status          PublishStatus @default(DRAFT)
+  chapterId       String?
+  createdById     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  chapter      Chapter?      @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  createdBy    User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  certificates Certificate[]
+
+  @@index([status, startsAt])
+  @@index([chapterId])
+  @@map("events")
+}
+
+/// A course or reading track. Public pages show only PUBLISHED ones; progress lives in the student's browser
+/// (no student accounts), so nothing here is personal data.
+model Course {
+  id                String        @id @default(cuid())
+  slug              String        @unique
+  title             String
+  summary           String
+  /// Longer introduction, Markdown (optional).
+  description       String?
+  kind              CourseKind    @default(TRACK)
+  level             BookLevel     @default(BEGINNER)
+  durationWeeks     Int?
+  /// Estimated total workload in hours; also what a certificate for this course would state.
+  workloadHours     Int?
+  /// Whether the team issues a certificate for finishing it (shown on the public course page).
+  issuesCertificate Boolean       @default(false)
+  status            PublishStatus @default(DRAFT)
+  sortOrder         Int           @default(0)
+  frontId           String?
+  createdById       String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  front        Front?        @relation(fields: [frontId], references: [id], onDelete: SetNull)
+  createdBy    User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  lessons      Lesson[]
+  certificates Certificate[]
+
+  @@index([status, sortOrder])
+  @@index([frontId])
+  @@map("courses")
+}
+
+/// One step of a course: a reading (book), a text, or both, plus the questions and the task for that week.
+/// Order is `position`; it is renumbered by the dashboard, so gaps are fine.
+model Lesson {
+  id               String   @id @default(cuid())
+  courseId         String
+  position         Int
+  title            String
+  summary          String?
+  /// Lesson text, Markdown (optional for readings).
+  body             String?
+  bookId           String?
+  /// "Para debater": one question per entry.
+  questions        String[] @default([])
+  task             String?
+  estimatedMinutes Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  book   Book?  @relation(fields: [bookId], references: [id], onDelete: SetNull)
+
+  @@index([courseId, position])
+  @@index([bookId])
+  @@map("lessons")
+}
+
+/// A certificate issued by the team from the dashboard. The public can only look one up by its code (page
+/// /verify/<code>, PDF with a QR code pointing there). Personal data: the name is shown to whoever holds the code,
+/// the e-mail never is, and a certificate can be revoked (kept, marked) or deleted (erased).
+model Certificate {
+  id             String          @id @default(cuid())
+  /// Public verification code such as LJL-7K2M-QX4D-9HWB: 12 random characters (60 bits), so it cannot be guessed.
+  code           String          @unique
+  kind           CertificateKind @default(COMPLETION)
+  recipientName  String
+  /// Only used to send the certificate; never shown publicly.
+  recipientEmail String?
+  /// What it certifies, as printed on it: "Trilha de leitura: Primeiro mês".
+  title          String
+  hours          Int
+  /// The day the person finished or took part (a calendar date, not an instant).
+  completedOn    DateTime        @db.Date
+  courseId       String?
+  eventId        String?
+  issuedById     String?
+  issuedAt       DateTime        @default(now())
+  revokedAt      DateTime?
+  revokedReason  String?
+  updatedAt      DateTime        @updatedAt
+
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  event    Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  issuedBy User?   @relation(fields: [issuedById], references: [id], onDelete: SetNull)
+
+  @@index([issuedAt(sort: Desc)])
+  @@index([courseId])
+  @@index([eventId])
+  @@index([recipientEmail])
+  @@map("certificates")
+}
+
+/// Someone asking to open a diretório at their university (public form on /chapters). Personal data: collected
+/// with explicit consent, used only to answer, and deletable from the dashboard.
+model ChapterRequest {
+  id            String        @id @default(cuid())
+  name          String
+  email         String
+  university    String
+  /// Slug of `university`, used to count interest per campus. Staff can correct both when tidying duplicates.
+  universityKey String
+  course        String?
+  message       String?
+  status        RequestStatus @default(NEW)
+  /// Internal notes; never shown publicly.
+  notes         String?
+  /// When the person ticked the consent box.
+  consentAt     DateTime
+  /// SHA-256 of the IP address, kept only to rate-limit the form.
+  ipHash        String?
+  /// Last staff member who changed it.
+  handledById   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  handledBy User? @relation(fields: [handledById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([universityKey, status])
+  @@index([ipHash, createdAt])
+  @@index([email, createdAt])
+  @@map("chapter_requests")
+}
+
+// ───────────── audit ─────────────
+
+/// Who did what in the dashboard. Written by the modules' actions; read on the dashboard home.
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  /// Dotted verb, e.g. "post.publish", "book.create", "user.deactivate".
+  action    String
+  entity    String
+  entityId  String?
+  summary   String
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt(sort: Desc)])
+  @@index([userId])
+  @@map("activity_logs")
+}
