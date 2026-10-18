@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ExportLink } from "@/components/dashboard/ExportLink";
 import { Empty, PageHeader, Pill, dateBR } from "@/components/dashboard/ui";
 import type { RequestStatus } from "@/generated/prisma/client";
 import { requireRole } from "@/modules/auth/dal";
@@ -16,7 +17,7 @@ export default async function ChapterRequestsPage({ searchParams }: { searchPara
 
   return (
     <>
-      <PageHeader title="Pedidos de diretório" subtitle="Estudantes que pediram para abrir um diretório. Só entram no contador público os que você já respondeu." />
+      <PageHeader title="Pedidos de diretório" subtitle="Estudantes que pediram para abrir um diretório. Só entram no contador público os que você já respondeu." actions={<ExportLink kind="chapter-requests" />} />
       <nav className="dash-filters" aria-label="Filtrar por situação">
         <Link href="/dashboard/chapter-requests" aria-current={!filter}>
           Todos ({total})

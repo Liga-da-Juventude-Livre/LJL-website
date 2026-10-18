@@ -18,6 +18,7 @@ export default async function ChapterRequestPage({ params }: { params: Promise<{
   return (
     <>
       <PageHeader
+        back={{ href: "/dashboard/chapter-requests", label: "Pedidos de diretório" }}
         title={request.name}
         subtitle={`${request.university} · recebido em ${dateTimeBR(request.createdAt)}`}
         actions={

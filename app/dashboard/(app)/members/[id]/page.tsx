@@ -28,6 +28,7 @@ export default async function MemberPage({ params }: { params: Promise<{ id: str
   return (
     <>
       <PageHeader
+        back={{ href: "/dashboard/members", label: "Membros" }}
         title={m.name}
         subtitle={`${m.chapter.name} · ${memberTitleLabel(m.title)} · desde ${calendarDateBR(m.startedOn)}`}
         actions={

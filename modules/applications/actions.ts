@@ -1,8 +1,9 @@
 "use server";
 
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import type { FormState } from "@/lib/form-state";
+import { redirectWithNotice } from "@/lib/flash";
 import { formToObject, invalid } from "@/lib/forms";
 import { recordActivity } from "@/modules/activity/record";
 import { requireRole } from "@/modules/auth/dal";
@@ -50,7 +51,7 @@ export async function deleteApplication(id: string): Promise<void> {
     entity: "Application",
     summary: `Excluiu uma candidatura (${application.chapter?.name ?? "sem diretório"})`,
   });
-  redirect("/dashboard/applications");
+  redirectWithNotice("/dashboard/applications", "Candidatura excluída.");
 }
 
 /** Retention policy (see /privacy): deletes applications untouched for a year. Administrators only. */
@@ -63,5 +64,5 @@ export async function purgeStaleApplications(): Promise<void> {
     entity: "Application",
     summary: `Apagou ${count} candidaturas sem atividade há mais de ${RETENTION_MONTHS} meses`,
   });
-  redirect("/dashboard/applications");
+  redirectWithNotice("/dashboard/applications", `${count} ${count === 1 ? "candidatura apagada" : "candidaturas apagadas"}.`);
 }

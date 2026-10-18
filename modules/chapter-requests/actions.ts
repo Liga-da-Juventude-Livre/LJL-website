@@ -1,8 +1,9 @@
 "use server";
 
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import type { FormState } from "@/lib/form-state";
+import { redirectWithNotice } from "@/lib/flash";
 import { formToObject, invalid } from "@/lib/forms";
 import { slugify } from "@/lib/slug";
 import { recordActivity } from "@/modules/activity/record";
@@ -47,5 +48,5 @@ export async function deleteChapterRequest(id: string): Promise<void> {
     entity: "ChapterRequest",
     summary: `Excluiu um pedido de diretório (${request.university})`,
   });
-  redirect("/dashboard/chapter-requests");
+  redirectWithNotice("/dashboard/chapter-requests", "Pedido excluído.");
 }

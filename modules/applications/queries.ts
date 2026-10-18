@@ -6,11 +6,12 @@ import { RETENTION_MONTHS } from "./retention";
 
 // Every query takes the viewer and adds their scope, so a coordinator can never read another diretório's people.
 
-export const listApplications = (user: Actor, filter: { status?: ApplicationStatus; skill?: string } = {}) => {
+export const listApplications = (user: Actor, filter: { status?: ApplicationStatus; skill?: string; q?: string } = {}) => {
   const where: Prisma.ApplicationWhereInput = {
     ...applicationScope(user),
     ...(filter.status ? { status: filter.status } : {}),
     ...(filter.skill ? { skills: { has: filter.skill } } : {}),
+    ...(filter.q ? { OR: [{ name: { contains: filter.q, mode: "insensitive" as const } }, { email: { contains: filter.q, mode: "insensitive" as const } }, { course: { contains: filter.q, mode: "insensitive" as const } }] } : {}),
   };
   return db.application.findMany({ where, orderBy: { createdAt: "desc" }, include: { chapter: { select: { name: true } } } });
 };

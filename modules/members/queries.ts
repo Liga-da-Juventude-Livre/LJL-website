@@ -11,9 +11,13 @@ export const SOON_DAYS = 45;
 export const isEndingSoon = (m: { endedOn: Date | null; endsOn: Date | null }) =>
   !m.endedOn && !!m.endsOn && m.endsOn.getTime() <= Date.now() + SOON_DAYS * 86_400_000;
 
-export const listMembers = (user: Actor, alumni: boolean) =>
+export const listMembers = (user: Actor, alumni: boolean, q?: string) =>
   db.membership.findMany({
-    where: { ...chapterScope(user), endedOn: alumni ? { not: null } : null },
+    where: {
+      ...chapterScope(user),
+      endedOn: alumni ? { not: null } : null,
+      ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] } : {}),
+    },
     orderBy: alumni ? { endedOn: "desc" } : [{ endsOn: { sort: "asc", nulls: "last" } }, { name: "asc" }],
     include: { chapter: { select: { name: true } } },
   });

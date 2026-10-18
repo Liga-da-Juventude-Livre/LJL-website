@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Empty, PageHeader, Pill, dateBR } from "@/components/dashboard/ui";
+import { ExportLink } from "@/components/dashboard/ExportLink";
+import { Empty, PageHeader, Pill, SearchBox, dateBR } from "@/components/dashboard/ui";
 import { SKILLS, skillLabel } from "@/content/talent";
 import type { ApplicationStatus } from "@/generated/prisma/client";
 import { APPLICATION_STATUSES, applicationStatus } from "@/modules/applications/labels";
@@ -12,23 +13,25 @@ import { canManageContent } from "@/modules/auth/permissions";
 
 export const metadata = { title: "Candidaturas" };
 
-export default async function ApplicationsPage({ searchParams }: { searchParams: Promise<{ status?: string; skill?: string }> }) {
+export default async function ApplicationsPage({ searchParams }: { searchParams: Promise<{ status?: string; skill?: string; q?: string }> }) {
   const user = await requireRole("ADMIN", "EDITOR", "COORDINATOR");
-  const { status, skill } = await searchParams;
+  const { status, skill, q: rawQ } = await searchParams;
+  const q = rawQ?.trim() || undefined;
   const statusFilter = APPLICATION_STATUSES.find((s) => s.value === status)?.value as ApplicationStatus | undefined;
   const skillFilter = SKILLS.find((s) => s.value === skill)?.value;
   const [applications, counts, stale] = await Promise.all([
-    listApplications(user, { status: statusFilter, skill: skillFilter }),
+    listApplications(user, { status: statusFilter, skill: skillFilter, q }),
     countApplicationsByStatus(user),
     user.role === "ADMIN" ? countStaleApplications() : 0,
   ]);
   const total = Object.values(counts).reduce((a, b) => a + (b ?? 0), 0);
   const central = canManageContent(user);
   const href = (s?: string, k?: string) => {
-    const q = new URLSearchParams();
-    if (s) q.set("status", s);
-    if (k) q.set("skill", k);
-    return `/dashboard/applications${q.size ? `?${q}` : ""}`;
+    const p = new URLSearchParams();
+    if (s) p.set("status", s);
+    if (k) p.set("skill", k);
+    if (q) p.set("q", q);
+    return `/dashboard/applications${p.size ? `?${p}` : ""}`;
   };
 
   return (
@@ -36,6 +39,7 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
       <PageHeader
         title="Candidaturas"
         subtitle={central ? "Quem quer ajudar a Liga, por diretório." : "Quem quer ajudar o seu diretório. Filtre por competência quando abrir uma vaga."}
+        actions={<ExportLink kind="applications" />}
       />
       <nav className="dash-filters" aria-label="Filtrar por situação">
         <Link href={href(undefined, skillFilter)} aria-current={!statusFilter}>
@@ -47,6 +51,7 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
           </Link>
         ))}
       </nav>
+      <SearchBox q={q} placeholder="Buscar por nome, e-mail ou curso" keep={{ status: statusFilter, skill: skillFilter }} />
       <nav className="dash-filters" aria-label="Filtrar por competência">
         <Link href={href(statusFilter)} aria-current={!skillFilter}>
           Qualquer competência
@@ -58,7 +63,7 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
         ))}
       </nav>
       {applications.length === 0 ? (
-        <Empty title="Nenhuma candidatura aqui">{statusFilter || skillFilter ? "Tente outro filtro." : "Quando alguém preencher o formulário em /join, a candidatura aparece aqui."}</Empty>
+        <Empty title="Nenhuma candidatura aqui">{statusFilter || skillFilter || q ? "Tente outra busca ou filtro." : "Quando alguém preencher o formulário em /join, a candidatura aparece aqui."}</Empty>
       ) : (
         <div className="dash-table-wrap">
           <table className="dash-table">

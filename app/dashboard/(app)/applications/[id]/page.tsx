@@ -26,6 +26,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
   return (
     <>
       <PageHeader
+        back={{ href: "/dashboard/applications", label: "Candidaturas" }}
         title={a.name}
         subtitle={`${a.chapter?.name ?? "Sem diretório"} · recebida em ${dateTimeBR(a.createdAt)}`}
         actions={

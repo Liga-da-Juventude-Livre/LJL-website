@@ -1,8 +1,9 @@
 "use server";
 
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import type { FormState } from "@/lib/form-state";
+import { redirectWithNotice } from "@/lib/flash";
 import { failure, formToObject, invalid } from "@/lib/forms";
 import { memberTitleLabel } from "@/content/talent";
 import { recordActivity } from "@/modules/activity/record";
@@ -75,7 +76,7 @@ export async function saveMember(_prev: FormState, formData: FormData): Promise<
       entityId: id,
       summary: `Editou um membro (${current.chapter.name}): ${memberTitleLabel(data.title)}`,
     });
-    redirect(`/dashboard/members/${id}`);
+    redirectWithNotice(`/dashboard/members/${id}`, "Dados do membro salvos.");
   }
 
   const created = await db.membership.create({
@@ -98,7 +99,7 @@ export async function saveMember(_prev: FormState, formData: FormData): Promise<
     entityId: created.id,
     summary: `Adicionou um membro (${chapter.name}): ${memberTitleLabel(data.title)}`,
   });
-  redirect(`/dashboard/members/${created.id}`);
+  redirectWithNotice(`/dashboard/members/${created.id}`, "Membro adicionado.");
 }
 
 /** Ends the mandate: the person becomes an alumnus. An administrator also switches off the linked login. */
@@ -120,7 +121,7 @@ export async function endMembership(id: string): Promise<void> {
     entityId: id,
     summary: `Encerrou um mandato (${m.chapter.name}): ${memberTitleLabel(m.title)}`,
   });
-  redirect(`/dashboard/members/${id}`);
+  redirectWithNotice(`/dashboard/members/${id}`, "Mandato encerrado. A pessoa agora é alumni.");
 }
 
 export async function reactivateMembership(id: string): Promise<void> {
@@ -134,7 +135,7 @@ export async function reactivateMembership(id: string): Promise<void> {
     entityId: id,
     summary: `Reativou um membro (${m.chapter.name}): ${memberTitleLabel(m.title)}`,
   });
-  redirect(`/dashboard/members/${id}`);
+  redirectWithNotice(`/dashboard/members/${id}`, "Membro reativado.");
 }
 
 export async function deleteMembership(id: string): Promise<void> {
@@ -147,5 +148,5 @@ export async function deleteMembership(id: string): Promise<void> {
     entity: "Membership",
     summary: `Excluiu um membro (${m.chapter.name}): ${memberTitleLabel(m.title)}`,
   });
-  redirect("/dashboard/members");
+  redirectWithNotice("/dashboard/members", "Registro excluído.");
 }
