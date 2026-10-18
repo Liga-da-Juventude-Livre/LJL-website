@@ -53,3 +53,17 @@ export async function getOverview(user: Actor) {
     certificates,
   };
 }
+
+export type NavBadges = { inReview: number; applications: number; endingSoon: number; requests: number };
+
+/** What is waiting for this person, for the numbers next to menu items. Zero hides the badge. */
+export async function getNavBadges(user: Actor): Promise<NavBadges> {
+  const editor = canManageContent(user);
+  const [inReview, applications, endingSoon, requests] = await Promise.all([
+    editor ? db.post.count({ where: { status: "IN_REVIEW" } }) : 0,
+    canHandleApplications(user) ? countNewApplications(user) : 0,
+    canHandleApplications(user) ? countEndingSoon(user) : 0,
+    editor ? db.chapterRequest.count({ where: { status: "NEW" } }) : 0,
+  ]);
+  return { inReview, applications, endingSoon, requests };
+}

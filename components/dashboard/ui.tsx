@@ -1,19 +1,69 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { fieldError, valueOf, type FormState } from "@/lib/form-state";
+import { Icon } from "./icons";
 
 // Presentational pieces shared by every dashboard module. No hooks, no server-only imports,
 // so they work in both server pages and client forms.
 
-export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
+export function PageHeader({ title, subtitle, actions, back }: { title: string; subtitle?: string; actions?: ReactNode; back?: { href: string; label: string } }) {
   return (
     <header className="dash-head">
-      <div>
+      <div className="dash-head-text">
+        {back && (
+          <Link href={back.href} className="dash-back">
+            <Icon name="arrowLeft" size={16} />
+            {back.label}
+          </Link>
+        )}
         <h1>{title}</h1>
         {subtitle && <p>{subtitle}</p>}
       </div>
       {actions && <div className="dash-head-actions">{actions}</div>}
     </header>
+  );
+}
+
+/** A GET search form: submitting reloads the page with ?q=…, keeping the other filters in `keep`. */
+export function SearchBox({ q, placeholder, keep = {} }: { q?: string; placeholder: string; keep?: Record<string, string | undefined> }) {
+  return (
+    <form className="dash-search" role="search">
+      {Object.entries(keep).map(([k, v]) => (v ? <input key={k} type="hidden" name={k} value={v} /> : null))}
+      <label className="sr-only" htmlFor="q">
+        {placeholder}
+      </label>
+      <span className="dash-search-icon">
+        <Icon name="search" size={18} />
+      </span>
+      <input id="q" name="q" defaultValue={q ?? ""} className="dash-input" placeholder={placeholder} autoComplete="off" />
+      <button type="submit" className="dash-btn dash-btn-ghost">
+        Buscar
+      </button>
+    </form>
+  );
+}
+
+/** Previous/next links for a paged list; `hrefFor(page)` builds the address keeping the current filters. */
+export function Pager({ page, pageCount, total, hrefFor }: { page: number; pageCount: number; total: number; hrefFor: (page: number) => string }) {
+  if (pageCount <= 1) return null;
+  return (
+    <nav className="dash-pager" aria-label="Paginação">
+      <span>
+        Página {page} de {pageCount} · {total} {total === 1 ? "item" : "itens"}
+      </span>
+      <div>
+        {page > 1 && (
+          <Link className="dash-btn dash-btn-ghost dash-btn-sm" href={hrefFor(page - 1)}>
+            ← Anterior
+          </Link>
+        )}
+        {page < pageCount && (
+          <Link className="dash-btn dash-btn-ghost dash-btn-sm" href={hrefFor(page + 1)}>
+            Próxima →
+          </Link>
+        )}
+      </div>
+    </nav>
   );
 }
 
