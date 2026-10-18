@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { CopyEmail } from "@/components/CopyEmail";
+import { DebateDeck } from "@/components/DebateDeck";
 import { Faq } from "@/components/Faq";
 import { Fronts } from "@/components/Fronts";
+import { Gallery } from "@/components/Gallery";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { HeroSnake } from "@/components/HeroSnake";
@@ -11,7 +13,7 @@ import { Vision } from "@/components/Vision";
 import { contactEmail, firstChapter, ways } from "@/content/site";
 
 // White and green alternate, so two neighbours never share a colour:
-// hero white · band green · vision white · fronts green · participe white · faq green · timeline white ·
+// hero white · band green · vision white · fronts green · participe white · faq green · gallery white · debate green · timeline white ·
 // join green · footer white. Green sections paint in from the left like the logo's L.
 
 const MOTTO = ["Liberdade", "Propriedade", "Responsabilidade"];
@@ -166,6 +168,24 @@ export default function Home() {
               </div>
             </SectionHead>
             <Faq />
+          </div>
+        </section>
+
+        <section className="section" id="gallery">
+          <div className="wrap">
+            <SectionHead kicker="Em campo" title="Estudantes que já se reuniram pela liberdade." />
+            <Gallery />
+          </div>
+        </section>
+
+        <section className="section green wipe-l" id="debate">
+          <div className="wrap">
+            <SectionHead kicker="Para o debate" title="Qual pergunta você levaria para a mesa?">
+              <p className="section-sub rise" style={n(4)}>
+                Cada frente de atuação tem uma pergunta que a Liga leva para a roda. Sorteie uma e comece a conversa.
+              </p>
+            </SectionHead>
+            <DebateDeck />
           </div>
         </section>
 
