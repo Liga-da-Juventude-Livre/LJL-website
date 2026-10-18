@@ -64,7 +64,7 @@ variáveis. Só o que aparece na tela fica em português.
 ## Modelo de dados
 
 `User` e `Session` (acesso) · `Chapter` (diretório) · `Front` (frente) · `Post` (artigo ou notícia) · `Book` e `BookDownload` ·
-`Event` · `ChapterRequest` (pedido de diretório) · `Course` e `Lesson` (cursos e trilhas) · `Certificate` · `ActivityLog` (quem fez o quê). Comentários explicando cada campo estão no `prisma/schema.prisma`.
+`Event` · `ChapterRequest` (pedido de diretório) · `Application` (candidatura, banco de talentos) · `Membership` (membro e alumni) · `Course` e `Lesson` (cursos e trilhas) · `Certificate` · `ActivityLog` (quem fez o quê). Comentários explicando cada campo estão no `prisma/schema.prisma`.
 
 ## Perfis
 
@@ -72,6 +72,7 @@ variáveis. Só o que aparece na tela fica em português.
 |---|---|
 | Administrador | tudo, inclusive criar contas e mudar perfis |
 | Editor | todo o conteúdo (posts, livros, eventos, diretórios) e publicar |
+| Coordenação de diretório | candidaturas e membros do **próprio** diretório (a conta precisa de um diretório); escreve artigos como Autor, sem publicar |
 | Autor | escrever artigos e notícias; salva rascunho e envia para revisão, mas não publica; só vê e edita os próprios textos |
 
 As regras estão em `modules/auth/permissions.ts` e valem no servidor, não só no menu.
@@ -97,6 +98,20 @@ contra robôs, no máximo 5 pedidos por hora por IP e 2 por dia por e-mail, e ne
 - Do IP guardamos só um hash, para a limitação de pedidos. Defina `IP_HASH_SALT` em produção.
 - Ainda **não há aviso por e-mail** quando chega um pedido: a equipe vê o contador "Pedidos de diretório novos" na visão geral do painel.
 - Falta uma página de política de privacidade; vale criar antes de divulgar o formulário.
+
+## Recrutamento: candidaturas, membros e alumni
+
+Quem quer ajudar a Liga se candidata em `/join`; a coordenação de cada diretório cuida do funil; quem sai vira alumni e a vaga é preenchida pelo banco de talentos.
+
+- **Candidatura** (`Application`): formulário público com as mesmas proteções do pedido de diretório (campo-armadilha, limite por IP e e-mail, nenhum e-mail enviado). Competências, interesses e funções ficam em `content/talent.ts`: os `value` vão para o banco, então mude o texto, nunca o `value`. Candidatar-se de novo ao mesmo diretório atualiza a candidatura anterior.
+- **Funil**: Nova → Em conversa → Banco de talentos → Convidada(o) → Membro (mais Recusada e Desistiu). Em **Candidaturas** (painel) dá para filtrar por situação e por competência.
+- **Escopo**: Administrador e Editor veem tudo (inclusive quem marcou "sem diretório"); a **Coordenação** só o próprio diretório. O filtro (`chapterScope`, em `modules/auth/permissions.ts`) entra em toda consulta e ação.
+- **Membro** (`Membership`): função, início e fim previsto do mandato. **Tornar membro** a partir de uma candidatura copia os dados e as competências e marca a candidatura como Membro. Mandatos que terminam em até 45 dias (ou já passaram) aparecem como "Vaga a caminho" e na visão geral.
+- **Alumni**: **Encerrar mandato** põe a data de saída; a pessoa continua listada (pode ser mentora). Se a pessoa tem conta no painel ligada ao registro (só o Administrador liga), o Administrador também a desativa nessa hora; coordenação não desativa contas.
+- **Quem pode assumir**: na página de um membro, o banco de talentos do mesmo diretório, com quem tem mais competências em comum primeiro.
+- **Trilha e certificado**: a trilha "Primeiro mês" é o caminho de entrada. Na candidatura, Administrador e Editor têm o botão **Certificado da trilha** (abre a emissão já preenchida) e, no membro, **Emitir certificado de participação**. A candidatura **não** cria conta: o Administrador cria a conta em Usuários só quando a pessoa vira membro.
+- **Privacidade**: `/privacy` descreve o que guardamos. Candidaturas sem atividade há 12 meses que nunca viraram membro podem ser apagadas pelo Administrador (botão **Apagar candidaturas antigas** em Candidaturas). Os textos da política são um ponto de partida: vale uma revisão jurídica antes de divulgar.
+- Ainda **não há aviso por e-mail** quando chega uma candidatura: a coordenação vê o contador "Candidaturas novas" na visão geral.
 
 ## Cursos e trilhas (`/courses`)
 

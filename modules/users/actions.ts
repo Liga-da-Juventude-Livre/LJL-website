@@ -18,6 +18,7 @@ export async function saveUser(_prev: FormState, formData: FormData): Promise<Fo
   const pinned = (field: string, message: string) => failure(raw, "Corrija os campos destacados.", { [field]: [message] });
   const { id, password, chapterId, ...data } = parsed.data;
 
+  if (data.role === "COORDINATOR" && !chapterId) return pinned("chapterId", "Escolha o diretório que esta pessoa coordena.");
   if (!id && !password) return pinned("password", "Defina uma senha provisória.");
 
   if (id) {

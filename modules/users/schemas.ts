@@ -8,7 +8,7 @@ export const userSchema = z.object({
   id: optionalText(40),
   name: text(2, 100),
   email: z.string().trim().toLowerCase().pipe(z.email("E-mail inválido.")),
-  role: z.enum(["ADMIN", "EDITOR", "AUTHOR"]),
+  role: z.enum(["ADMIN", "EDITOR", "COORDINATOR", "AUTHOR"]),
   chapterId: optionalText(40),
   active: checkbox,
   // New account: required. Existing account: optional, and setting it resets the password.

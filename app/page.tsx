@@ -159,9 +159,9 @@ export default function Home() {
               <div className="faq-help rise" style={n(3)}>
                 <p className="faq-help-title">Não achou a resposta?</p>
                 <p>Mande sua dúvida. Quem responde é alguém da Liga, não um robô.</p>
-                <a className="btn btn-yellow" href={mailto("Dúvida sobre a Liga")}>
+                <Link className="btn btn-yellow" href="/join#candidatura">
                   Escrever para a Liga <span aria-hidden="true">→</span>
-                </a>
+                </Link>
                 <a className="faq-help-mail" href={`mailto:${contactEmail}`}>
                   {contactEmail}
                 </a>
@@ -205,9 +205,9 @@ export default function Home() {
             <div className="join-card rise" style={n(5)}>
               <p className="join-card-label">Escreva para</p>
               <CopyEmail email={contactEmail} />
-              <a className="btn btn-yellow" href={mailto("Quero fazer parte da Liga")}>
-                Escrever para a Liga <span aria-hidden="true">→</span>
-              </a>
+              <Link className="btn btn-yellow" href="/join#candidatura">
+                Quero me candidatar <span aria-hidden="true">→</span>
+              </Link>
             </div>
           </div>
           <div className="marquee" aria-hidden="true">

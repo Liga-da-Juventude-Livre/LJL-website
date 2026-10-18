@@ -25,6 +25,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
           { n: data.newRequests, l: "Pedidos de diretório novos", href: "/dashboard/chapter-requests?status=NEW" },
         ]
       : []),
+    ...(data.canApplications ? [{ n: data.newApplications, l: "Candidaturas novas", href: "/dashboard/applications?status=NEW" }, { n: data.endingSoon, l: "Mandatos terminando", href: "/dashboard/members" }] : []),
     ...(user.role === "ADMIN" ? [{ n: data.users, l: "Pessoas com acesso", href: "/dashboard/users" }] : []),
   ];
 

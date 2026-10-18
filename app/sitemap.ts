@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 // reached the fixed pages are still listed. Needs SITE_URL in production so the addresses are absolute.
 export const revalidate = 3600;
 
-const PAGES = ["", "/library", "/courses", "/chapters", "/articles", "/verify"];
+const PAGES = ["", "/library", "/courses", "/chapters", "/join", "/privacy", "/articles", "/verify"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/+$/, "");

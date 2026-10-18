@@ -1,12 +1,14 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { canManageContent, type Actor } from "@/modules/auth/permissions";
+import { countNewApplications } from "@/modules/applications/queries";
+import { countEndingSoon } from "@/modules/members/queries";
+import { canHandleApplications, canManageContent, type Actor } from "@/modules/auth/permissions";
 
 export async function getOverview(user: Actor) {
   const editor = canManageContent(user);
   const mine = editor ? {} : { createdById: user.id };
 
-  const [grouped, awaiting, books, upcomingEvents, chapters, users, activity, newRequests, courses, certificates] = await Promise.all([
+  const [grouped, awaiting, books, upcomingEvents, chapters, users, activity, newRequests, courses, certificates, newApplications, endingSoon] = await Promise.all([
     db.post.groupBy({ by: ["type", "status"], where: mine, _count: { _all: true } }),
     db.post.findMany({
       where: { status: "IN_REVIEW", ...mine },
@@ -24,6 +26,8 @@ export async function getOverview(user: Actor) {
     editor ? db.chapterRequest.count({ where: { status: "NEW" } }) : 0,
     editor ? db.course.count({ where: { status: "PUBLISHED" } }) : 0,
     editor ? db.certificate.count({ where: { revokedAt: null } }) : 0,
+    canHandleApplications(user) ? countNewApplications(user) : 0,
+    canHandleApplications(user) ? countEndingSoon(user) : 0,
   ]);
 
   const count = (type: "ARTICLE" | "NEWS" | null, status: string) =>
@@ -38,6 +42,9 @@ export async function getOverview(user: Actor) {
     books,
     upcomingEvents,
     chapters,
+    newApplications,
+    endingSoon,
+    canApplications: canHandleApplications(user),
     users,
     awaiting,
     activity,

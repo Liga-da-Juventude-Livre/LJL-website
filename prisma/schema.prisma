@@ -19,6 +19,8 @@ enum Role {
   ADMIN
   EDITOR
   AUTHOR
+  /// Runs one diretório: reads and answers that chapter's applications. Writes posts like an AUTHOR.
+  COORDINATOR
 
   @@map("role")
 }
@@ -48,6 +50,19 @@ enum RequestStatus {
   ARCHIVED
 
   @@map("request_status")
+}
+
+/// Where a volunteer application stands in a chapter's funnel.
+enum ApplicationStatus {
+  NEW
+  TALKING
+  POOL
+  INVITED
+  MEMBER
+  DECLINED
+  WITHDREW
+
+  @@map("application_status")
 }
 
 /// A reading track is a course whose lessons are readings; both share one structure.
@@ -93,15 +108,18 @@ model User {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  chapter         Chapter?         @relation(fields: [chapterId], references: [id], onDelete: SetNull)
-  sessions        Session[]
-  posts           Post[]
-  books           Book[]
-  events          Event[]
-  activities      ActivityLog[]
-  handledRequests ChapterRequest[]
-  courses         Course[]
-  certificates    Certificate[]
+  chapter             Chapter?         @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  sessions            Session[]
+  posts               Post[]
+  books               Book[]
+  events              Event[]
+  activities          ActivityLog[]
+  handledRequests     ChapterRequest[]
+  handledApplications Application[]
+  memberships         Membership[]     @relation("MembershipAccount")
+  createdMemberships  Membership[]     @relation("MembershipCreatedBy")
+  courses             Course[]
+  certificates        Certificate[]
 
   @@index([chapterId])
   @@map("users")
@@ -140,9 +158,11 @@ model Chapter {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  users  User[]
-  posts  Post[]
-  events Event[]
+  users        User[]
+  posts        Post[]
+  events       Event[]
+  applications Application[]
+  memberships  Membership[]
 
   @@map("chapters")
 }
@@ -400,6 +420,75 @@ model ChapterRequest {
   @@index([ipHash, createdAt])
   @@index([email, createdAt])
   @@map("chapter_requests")
+}
+
+/// Someone who wants to help a diretório (the talent pool). Not an account: a login only exists once the person
+/// becomes a member. `chapterId` is null for "no chapter near me", which only central staff see.
+model Application {
+  id           String            @id @default(cuid())
+  chapterId    String?
+  name         String
+  email        String
+  course       String?
+  /// Free text such as "3º período".
+  period       String?
+  /// Values from content/talent.ts.
+  skills       String[]
+  interests    String[]
+  hoursPerWeek Int?
+  portfolioUrl String?
+  message      String?
+  status       ApplicationStatus @default(NEW)
+  /// Internal notes; never shown publicly.
+  notes        String?
+  consentAt    DateTime
+  /// SHA-256 of the IP address, kept only to rate-limit the form.
+  ipHash       String?
+  handledById  String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  chapter    Chapter?    @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  handledBy  User?       @relation(fields: [handledById], references: [id], onDelete: SetNull)
+  membership Membership?
+
+  @@index([chapterId, status, createdAt(sort: Desc)])
+  @@index([ipHash, createdAt])
+  @@index([email, createdAt])
+  @@map("applications")
+}
+
+/// A person's place in a diretório. Active while `endedOn` is empty; once it is set the person is an alumnus, who keeps
+/// being listed (and can mentor) but loses editing access. `endsOn` is the planned end of the mandate and drives the
+/// "vaga a caminho" warning. Not an account: `userId` only links one when the person also has a login.
+model Membership {
+  id            String    @id @default(cuid())
+  chapterId     String
+  name          String
+  email         String
+  /// A value from MEMBER_TITLES in content/talent.ts.
+  title         String
+  /// Copied from the application so a vacancy can be matched against the talent pool.
+  skills        String[]
+  startedOn     DateTime  @db.Date
+  endsOn        DateTime? @db.Date
+  endedOn       DateTime? @db.Date
+  /// An alumnus who offered to help newcomers.
+  mentor        Boolean   @default(false)
+  notes         String?
+  applicationId String?   @unique
+  userId        String?
+  createdById   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  chapter     Chapter      @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  application Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  user        User?        @relation("MembershipAccount", fields: [userId], references: [id], onDelete: SetNull)
+  createdBy   User?        @relation("MembershipCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([chapterId, endedOn])
+  @@map("memberships")
 }
 
 // ───────────── audit ─────────────

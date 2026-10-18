@@ -32,9 +32,10 @@ export function UserForm({ initial, chapters }: { initial: UserValues; chapters:
         <Field label="E-mail" name="email" state={state}>
           <input id="email" name="email" type="email" defaultValue={valueOf(state, "email", initial.email)} className="dash-input" required />
         </Field>
-        <Field label="Perfil" name="role" state={state} hint="Autor escreve e envia para revisão. Editor publica e cuida de todo o conteúdo. Administrador também gerencia pessoas.">
+        <Field label="Perfil" name="role" state={state} hint="Autor escreve e envia para revisão. Coordenação também cuida das candidaturas do próprio diretório (escolha o diretório ao lado). Editor publica e cuida de todo o conteúdo. Administrador também gerencia pessoas.">
           <FormSelect name="role" state={state} saved={initial.role}>
             <option value="AUTHOR">Autor</option>
+            <option value="COORDINATOR">Coordenação de diretório</option>
             <option value="EDITOR">Editor</option>
             <option value="ADMIN">Administrador</option>
           </FormSelect>

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { IMAGE_TYPES, MAX_IMAGE_BYTES, MEDIA_SCOPES } from "@/lib/media";
 import { isStorageConfigured } from "@/lib/storage";
 import { getSessionUser } from "@/modules/auth/dal";
+import { canManageContent } from "@/modules/auth/permissions";
 
 // Step 1 of an image upload: hands the logged-in browser a short-lived token to upload one image straight to Blob.
 // The token only allows the given folder, the three image types and 5 MB. Nothing is saved in the database until the
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
       onBeforeGenerateToken: async (pathname) => {
         const scope = pathname.split("/")[0];
         if (!(MEDIA_SCOPES as readonly string[]).includes(scope) || pathname.split("/").length !== 2) throw new Error("Destino inválido.");
-        if (scope === "books" && user.role === "AUTHOR") throw new Error("Seu perfil não pode enviar capas de livros.");
+        if (scope === "books" && !canManageContent(user)) throw new Error("Seu perfil não pode enviar capas de livros.");
         return {
           allowedContentTypes: Object.keys(IMAGE_TYPES),
           maximumSizeInBytes: MAX_IMAGE_BYTES,

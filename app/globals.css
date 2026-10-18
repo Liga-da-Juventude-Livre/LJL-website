@@ -2169,6 +2169,147 @@ h3 {
   }
 }
 
+/* custom select (components/Select.tsx) */
+.sel {
+  position: relative;
+}
+.sel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.sel-btn[aria-expanded="true"] {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+.sel-chev {
+  flex: none;
+  transition: transform 0.2s var(--ease);
+}
+.sel-btn[aria-expanded="true"] .sel-chev {
+  transform: rotate(180deg);
+}
+.sel-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 0 1.5px var(--ink), 0 16px 36px rgba(0, 0, 0, 0.18);
+  animation: sel-in 0.16s var(--ease);
+}
+@keyframes sel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.sel-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.sel-opt.active {
+  background: var(--paper);
+}
+.sel-opt.on {
+  font-weight: 700;
+  color: var(--green);
+}
+
+/* join (volunteer application) */
+.join-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.chips {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.chips legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+.chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  position: relative;
+  cursor: pointer;
+}
+.chip input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+.chip span {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1.5px #cfcdc4;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.chip:hover span {
+  box-shadow: inset 0 0 0 1.5px #a9a79d;
+}
+.chip input:checked + span {
+  background: var(--green);
+  color: #fff;
+  box-shadow: none;
+}
+.chip input:focus-visible + span {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+.join-steps {
+  display: grid;
+  gap: 22px;
+  margin-top: 12px;
+  padding: 0;
+  list-style: none;
+}
+.join-steps li {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+.join-steps h3 {
+  font-size: 1.15rem;
+}
+.join-steps p {
+  color: rgba(255, 255, 255, 0.8);
+}
+@media (max-width: 480px) {
+  .join-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* courses and reading tracks */
 .course-group + .course-group {
   margin-top: 56px;

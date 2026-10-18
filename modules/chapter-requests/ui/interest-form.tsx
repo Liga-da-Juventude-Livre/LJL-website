@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import Link from "next/link";
 import { checkedOf, fieldError, valueOf, type FormState } from "@/lib/form-state";
 import { submitChapterRequest } from "@/modules/chapter-requests/public-actions";
 
@@ -73,7 +74,7 @@ export function InterestForm({ contactEmail }: { contactEmail: string }) {
         </label>
         {fieldError(state, "consent") && <p className="interest-error">{fieldError(state, "consent")}</p>}
         <p className="interest-hint">
-          Os dados ficam só com a equipe da Liga. Você pode pedir a exclusão a qualquer momento escrevendo para {contactEmail}.
+          Os dados ficam só com a equipe da Liga. Você pode pedir a exclusão a qualquer momento escrevendo para {contactEmail}. Veja a <Link href="/privacy">política de privacidade</Link>.
         </p>
       </div>
       <Submit />

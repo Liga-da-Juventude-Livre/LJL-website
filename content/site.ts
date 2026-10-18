@@ -72,6 +72,7 @@ export const ways: { title: string; text: string; cta: string; href?: string }[]
     title: "Entre no diretório da PUC-Rio",
     text: "Se você estuda na PUC-Rio, participe dos encontros, debates e grupos de estudo do primeiro diretório da Liga.",
     cta: "Quero participar",
+    href: "/join",
   },
   {
     title: "Abra um diretório na sua universidade",
@@ -83,6 +84,7 @@ export const ways: { title: string; text: string; cta: string; href?: string }[]
     title: "Escreva com a gente",
     text: "Tem uma ideia de artigo sobre economia, instituições ou liberdade? Mande sua proposta para publicarmos no site.",
     cta: "Quero escrever",
+    href: "/join?skills=writing&interests=content#candidatura",
   },
 ];
 

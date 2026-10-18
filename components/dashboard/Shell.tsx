@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { logout } from "@/modules/auth/actions";
-import { canManageContent, canManageUsers, roleLabel } from "@/modules/auth/permissions";
+import { canHandleApplications, canManageContent, canManageUsers, roleLabel } from "@/modules/auth/permissions";
 import type { SessionUser } from "@/modules/auth/dal";
 import { LogoMark } from "@/components/Logo";
 import { NavLinks, type NavItem } from "./NavLinks";
@@ -22,6 +22,9 @@ function navFor(user: SessionUser): NavItem[] {
       { href: "/dashboard/chapters", label: "Diretórios" },
       { href: "/dashboard/chapter-requests", label: "Pedidos de diretório" },
     );
+  }
+  if (canHandleApplications(user)) {
+    items.push({ href: "/dashboard/applications", label: "Candidaturas" }, { href: "/dashboard/members", label: "Membros" });
   }
   if (canManageUsers(user)) items.push({ href: "/dashboard/users", label: "Usuários" });
   return items;
