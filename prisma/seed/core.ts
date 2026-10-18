@@ -3,6 +3,7 @@ import { fronts } from "../../content/site";
 import { slugify } from "../../lib/slug";
 import { hashPassword, MIN_PASSWORD } from "../../modules/auth/password";
 import { db } from "./client";
+import { ARTICLE_BYLINE, LEGACY_BYLINE_SUFFIX, articles } from "./data/articles";
 import { primeiroMes } from "./data/tracks";
 
 // What every environment gets. Safe to run again: each row is created only if it is missing, so edits made in the
@@ -26,6 +27,24 @@ export async function seedCore({ publishTrack = false }: { publishTrack?: boolea
     create: { slug: "puc-rio", name: "Diretório PUC-Rio", university: "PUC-Rio", city: "Rio de Janeiro", state: "RJ", active: true },
   });
   console.log(`✓ diretório ${chapter.name}`);
+
+  // The Liga's first articles. Created once; a row that still carries the old "(exemplo)" signature is upgraded to the
+  // official text, and one the team has rewritten and re-signed is left alone.
+  let upgraded = 0;
+  for (const a of articles) {
+    const content = { title: a.title, excerpt: a.excerpt, body: a.body, authorName: ARTICLE_BYLINE, frontId: frontIds.get(a.front) ?? null, chapterId: chapter.id };
+    const existing = await db.post.findUnique({ where: { type_slug: { type: "ARTICLE", slug: a.slug } }, select: { id: true, authorName: true } });
+    if (!existing) {
+      await db.post.create({
+        data: { type: "ARTICLE", slug: a.slug, ...content, status: "PUBLISHED", publishedAt: new Date(Date.now() - a.daysAgo * 24 * 60 * 60 * 1000) },
+      });
+    } else if (existing.authorName?.endsWith(LEGACY_BYLINE_SUFFIX)) {
+      // Published and unowned, so a later `db:samples:clear` (which removes demo-owned posts) cannot take them away.
+      await db.post.update({ where: { id: existing.id }, data: { ...content, status: "PUBLISHED", createdById: null, publishedAt: new Date(Date.now() - a.daysAgo * 24 * 60 * 60 * 1000) } });
+      upgraded++;
+    }
+  }
+  console.log(`✓ ${articles.length} artigos oficiais${upgraded ? ` (${upgraded} atualizados a partir dos exemplos antigos)` : ""}`);
 
   let downloads = 0;
   for (const [i, b] of books.entries()) {

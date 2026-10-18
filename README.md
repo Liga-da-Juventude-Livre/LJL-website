@@ -8,7 +8,7 @@ Site público e painel privado da Liga. Next.js 16 (App Router), Prisma 7 e Post
 npm install                 # também gera o cliente do Prisma
 cp .env.example .env        # preencha com as strings do Neon e o primeiro administrador
 npm run db:deploy           # cria as tabelas no Neon
-npm run db:seed             # frentes, diretório PUC-Rio, 16 livros, trilhas, 6 artigos de exemplo e o primeiro administrador
+npm run db:seed             # frentes, diretório PUC-Rio, 16 livros, trilhas, os 6 primeiros artigos oficiais e o primeiro administrador
 npm run db:seed:demo        # (só em desenvolvimento) além disso, logins de exemplo com senha compartilhada
 npm run dev                 # http://localhost:3000  ·  painel em /dashboard
 ```
@@ -22,8 +22,8 @@ O primeiro acesso usa o e-mail e a senha do `.env` e já pede para trocar a senh
 |---|---|
 | `npm run db:migrate` | cria uma nova migração a partir de mudanças no `schema.prisma` (desenvolvimento) |
 | `npm run db:deploy` | aplica as migrações pendentes (produção) |
-| `npm run db:seed` | núcleo (frentes, diretório, biblioteca, administrador) mais artigos e cursos de exemplo; pode rodar de novo, só cria o que falta e nunca sobrescreve edições |
-| `npm run db:seed:core` | só o núcleo, sem artigos nem cursos de exemplo |
+| `npm run db:seed` | núcleo (frentes, diretório, biblioteca, administrador) mais cursos de exemplo; os artigos oficiais fazem parte do núcleo; pode rodar de novo, só cria o que falta e nunca sobrescreve edições |
+| `npm run db:seed:core` | só o núcleo (frentes, diretório, biblioteca, artigos oficiais), sem cursos de exemplo |
 | `npm run db:seed:demo` | além disso, cria os logins de exemplo (veja abaixo) |
 | `npm run db:samples:clear` | remove os dados de exemplo; a biblioteca e o administrador real ficam, e artigos que a equipe reassinou também |
 | `node scripts/covers.mjs add <slug> <imagem>` | normaliza uma capa de livro e atualiza o índice (veja "Capas") |
@@ -143,19 +143,20 @@ o CNPJ), que pode ser impressa no rodapé preenchendo `legalLine` em `content/si
 
 ## Dados de exemplo
 
-`npm run db:seed` já traz seis artigos (quatro publicados, um em revisão, um rascunho), a trilha "Primeiro mês" publicada e dois cursos de exemplo, para o site não ficar vazio.
-Os artigos são textos educativos sobre ideias conhecidas (preços como sinais, a janela quebrada, separação de poderes, vouchers escolares, propriedade em Locke) e levam
-"Equipe da Liga (exemplo)" na assinatura. Os cursos de exemplo não emitem certificado. Antes de divulgar o site, rode `npm run db:samples:clear`: ele apaga só o que o seed
-criou e devolve "Primeiro mês" a rascunho. Se a equipe reassinou um artigo, ele é mantido.
+`npm run db:seed` já traz a trilha "Primeiro mês" publicada e dois cursos de exemplo. Os **seis primeiros artigos** (preços, a janela quebrada, separação de poderes, vouchers escolares, propriedade em Locke e abrir uma empresa) são conteúdo **oficial**,
+assinado "Equipe da Liga", instalado pelo núcleo do seed (`prisma/seed/data/articles.ts`): ficam publicados e `db:samples:clear` **não** os apaga. Um banco semeado por versões antigas, em que eles ainda levam "(exemplo)" na assinatura, é atualizado
+quando o seed roda de novo; um artigo que a equipe reescreveu e reassinou nunca é sobrescrito.
+Antes de divulgar o site, rode `npm run db:samples:clear`: ele apaga só os cursos de exemplo e o que pertence aos logins de exemplo, e devolve "Primeiro mês" a rascunho.
 
 ### Logins de exemplo (`db:seed:demo`)
 
-Só para desenvolvimento. Cria quatro logins (senha de todos: `liga-demo-2026`, ou o que estiver em `SEED_DEMO_PASSWORD`), distribui os artigos entre eles e liga o certificado nos cursos:
+Só para desenvolvimento. Cria quatro logins (senha de todos: `liga-demo-2026`, ou o que estiver em `SEED_DEMO_PASSWORD`), liga o certificado nos cursos:
 
 | Login | Perfil |
 |---|---|
 | `admin@liga.test` | Administrador |
 | `editor@liga.test` | Editor |
+| `coord@liga.test` | Coordenação de diretório (PUC-Rio) |
 | `autor@liga.test`, `autor2@liga.test` | Autor |
 
 **Nunca rode isto num banco de verdade**: o comando recusa quando `NODE_ENV` ou `VERCEL_ENV` é `production`. `db:samples:clear` também remove esses logins.
