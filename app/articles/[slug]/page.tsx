@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Fraunces } from "next/font/google";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -8,12 +7,11 @@ import { Header } from "@/components/Header";
 import { RevealObserver } from "@/components/Reveal";
 import { WriteCta } from "@/components/WriteCta";
 import { formatDate } from "@/lib/dates";
+import { display } from "@/lib/fonts";
 import { getPublishedArticle } from "@/modules/posts/public";
 
 type Props = { params: Promise<{ slug: string }> };
 
-// Magazine face for the reading page, the same one the Liga's panel and Instagram posts use.
-const display = Fraunces({ subsets: ["latin"], style: ["normal", "italic"], variable: "--font-display", display: "swap" });
 
 const initials = (name: string) =>
   name

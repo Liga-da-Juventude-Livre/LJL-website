@@ -7,13 +7,16 @@ import { Gallery } from "@/components/Gallery";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { HeroSnake } from "@/components/HeroSnake";
+import { HomeArticles } from "@/components/HomeArticles";
 import { RevealObserver, Words } from "@/components/Reveal";
 import { Timeline } from "@/components/Timeline";
 import { Vision } from "@/components/Vision";
 import { contactEmail, firstChapter, ways } from "@/content/site";
+import { listPublishedArticles } from "@/modules/posts/public";
 
 // White and green alternate, so two neighbours never share a colour:
-// hero white · band green · vision white · fronts green · participe white · faq green · gallery white · debate green · timeline white ·
+// hero white · articles green · vision white · fronts green · participe white · chapter band yellow · faq green · …
+// (older note) hero white · band green · vision white · fronts green · participe white · faq green · gallery white · debate green · timeline white ·
 // join green · footer white. Green sections paint in from the left like the logo's L.
 
 const MOTTO = ["Liberdade", "Propriedade", "Responsabilidade"];
@@ -34,7 +37,11 @@ function SectionHead({ kicker, title, children }: { kicker: string; title: strin
 
 const mailto = (subject: string) => `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}`;
 
-export default function Home() {
+// The home shows the newest articles, refreshed every few minutes.
+export const revalidate = 300;
+
+export default async function Home() {
+  const articles = await listPublishedArticles();
   const site = process.env.SITE_URL?.replace(/\/+$/, "");
   const organization = {
     "@context": "https://schema.org",
@@ -83,25 +90,8 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="band wipe-l" aria-label="Onde estamos">
-          <div className="wrap band-in" data-reveal>
-            <div>
-              <p className="kicker rise">Onde estamos</p>
-              <p className="band-title">
-                <Words text="Primeiro diretório:" />{" "}
-                <b>
-                  <Words text={firstChapter.university} from={2} />
-                </b>
-              </p>
-              <p className="band-sub rise" style={n(3)}>
-                A Liga está começando no {firstChapter.city}. O próximo diretório pode ser na sua universidade.
-              </p>
-            </div>
-            <Link className="btn btn-yellow rise" style={n(4)} href="/chapters#interest">
-              Abrir um diretório <span aria-hidden="true">→</span>
-            </Link>
-          </div>
-        </section>
+        <HomeArticles articles={articles} />
+
 
         <section className="section vision" id="vision">
           <div className="wrap vision-grid" data-reveal>
@@ -150,6 +140,26 @@ export default function Home() {
                 </li>
               ))}
             </ol>
+          </div>
+        </section>
+
+        <section className="band band-yellow wipe-r" aria-label="Onde estamos">
+          <div className="wrap band-in" data-reveal>
+            <div>
+              <p className="kicker rise">Onde estamos</p>
+              <p className="band-title">
+                <Words text="Primeiro diretório:" />{" "}
+                <b>
+                  <Words text={firstChapter.university} from={2} />
+                </b>
+              </p>
+              <p className="band-sub rise" style={n(3)}>
+                A Liga está começando no {firstChapter.city}. O próximo diretório pode ser na sua universidade.
+              </p>
+            </div>
+            <Link className="btn btn-green rise" style={n(4)} href="/chapters#interest">
+              Abrir um diretório <span aria-hidden="true">→</span>
+            </Link>
           </div>
         </section>
 
