@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { brasiliaDay } from "@/lib/dates";
 import { renderMarkdown } from "@/lib/markdown";
-import { painelGet } from "@/lib/painel";
+import { PAINEL_URL, painelGet } from "@/lib/painel";
 
 // What the public /articles pages show: only PUBLISHED articles, straight from the database, so the dashboard
 // is what publishes them. The body goes through the safe Markdown renderer (raw HTML is shown as text).
@@ -18,6 +18,9 @@ export type PublicArticle = {
   minutes: number;
   /** Public address of the cover image, if the article has one. */
   coverUrl: string | null;
+  /** Author's role and photo (articles written in the Liga's panel). */
+  authorRole?: string | null;
+  authorPhoto?: string | null;
 };
 
 const readingMinutes = (body: string) => Math.max(1, Math.round(body.split(/\s+/).filter(Boolean).length / 220));
@@ -50,10 +53,14 @@ const toMeta = (r: Row): PublicArticle => ({
 /** If the database cannot be reached the list is empty and the page shows its "em breve" state instead of failing. */
 export async function listPublishedArticles(): Promise<PublicArticle[]> {
   const [own, painel] = await Promise.all([
-    db.post
-      .findMany({ where: { type: "ARTICLE", status: "PUBLISHED" }, orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }], select })
-      .then((rows) => rows.map(toMeta))
-      .catch(() => [] as PublicArticle[]),
+    (async () => {
+      try {
+        const rows = await db.post.findMany({ where: { type: "ARTICLE", status: "PUBLISHED" }, orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }], select });
+        return rows.map(toMeta);
+      } catch {
+        return [] as PublicArticle[];
+      }
+    })(),
     listPainelArticles(),
   ]);
   const taken = new Set(own.map((a) => a.slug));
@@ -61,7 +68,12 @@ export async function listPublishedArticles(): Promise<PublicArticle[]> {
 }
 
 export async function getPublishedArticle(slug: string) {
-  const row = await db.post.findFirst({ where: { type: "ARTICLE", slug, status: "PUBLISHED" }, select }).catch(() => null);
+  let row: Row | null = null;
+  try {
+    row = await db.post.findFirst({ where: { type: "ARTICLE", slug, status: "PUBLISHED" }, select });
+  } catch {
+    // database unreachable: the panel's articles still show
+  }
   return row ? { ...toMeta(row), html: renderMarkdown(row.body) } : getPainelArticle(slug);
 }
 
@@ -79,16 +91,19 @@ const TEMAS: Record<string, string> = {
   universidade: "Universidade",
 };
 
-type PainelAutor = { nome?: string; cargo?: string };
+type PainelAutor = { id?: string; nome?: string; cargo?: string; fotoV?: number };
 type PainelResumo = { slug: string; titulo: string; linhaFina?: string; tema?: string; publicadoEm: string; minutos?: number; autor?: PainelAutor };
 
-const autorDe = (a?: PainelAutor) => [a?.nome, a?.cargo].filter(Boolean).join(", ") || "Liga da Juventude Livre";
+const cargoLiga = (c?: string) => (!c ? "Liga da Juventude Livre" : /liga/i.test(c) ? c : `${c} da Liga da Juventude Livre`);
+const fotoDe = (a?: PainelAutor) => (a?.id && a.fotoV && /^[a-z0-9]+$/i.test(a.id) ? `${PAINEL_URL}/api/foto/m-${a.id}?v=${a.fotoV}` : null);
 
 const fromPainel = (a: PainelResumo, autor?: PainelAutor): PublicArticle => ({
   slug: a.slug,
   title: a.titulo,
   excerpt: a.linhaFina ?? "",
-  author: autorDe(autor ?? a.autor),
+  author: (autor ?? a.autor)?.nome || "Liga da Juventude Livre",
+  authorRole: cargoLiga((autor ?? a.autor)?.cargo),
+  authorPhoto: fotoDe(autor ?? a.autor),
   date: brasiliaDay(new Date(a.publicadoEm)),
   front: (a.tema && TEMAS[a.tema]) || "Opinião",
   minutes: a.minutos ?? 3,
