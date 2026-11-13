@@ -16,6 +16,7 @@ export const nav = [
   { href: "/articles", label: "Artigos" },
   { href: "/#get-involved", label: "Participe" },
   { href: "/#faq", label: "Perguntas" },
+  { href: "https://ligadajuventudelivre-gestao.netlify.app", label: "Área do membro" },
 ];
 
 export const firstChapter = {

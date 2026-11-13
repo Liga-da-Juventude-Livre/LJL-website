@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import type { FormState } from "@/lib/form-state";
 import { failure, formToObject, invalid } from "@/lib/forms";
 import { contactEmail } from "@/content/site";
+import { painelPost } from "@/lib/painel";
 import { applicationSchema } from "./schemas";
 
 // The second place where the public writes to the database, so it is as strict as the chapter-request form:
@@ -68,5 +69,21 @@ export async function submitApplication(_prev: FormState, formData: FormData): P
   } else {
     await db.application.create({ data: { ...fields, email: data.email, chapterId: chapter, consentAt: new Date(), ipHash } });
   }
+
+  // A copy goes to the recruitment funnel of the Liga's panel (lib/painel.ts). The WhatsApp number is only sent there.
+  const whatsapp = String(formData.get("whatsapp") ?? "").replace(/\D/g, "").slice(0, 13);
+  const chapterName = chapter ? (await db.chapter.findUnique({ where: { id: chapter }, select: { university: true } }).catch(() => null))?.university ?? "" : "";
+  await painelPost("candidatar", {
+    origem: "site",
+    nome: data.name,
+    email: data.email,
+    whatsapp,
+    curso: [data.course, data.period].filter(Boolean).join(", "),
+    universidade: chapterName,
+    areas: [...new Set([...data.interests, ...data.skills])],
+    horas: data.hoursPerWeek ?? null,
+    portfolio: data.portfolioUrl ?? "",
+    motivo: data.message ?? "",
+  });
   return { ok: THANKS };
 }

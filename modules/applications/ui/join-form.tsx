@@ -80,6 +80,9 @@ export function JoinForm({ chapters, contactEmail, preset }: { chapters: { id: s
       <Field label="E-mail" name="email" state={state}>
         <input id="email" name="email" type="email" autoComplete="email" required maxLength={200} defaultValue={valueOf(state, "email", "")} className="interest-input" />
       </Field>
+      <Field label="WhatsApp (opcional)" name="whatsapp" state={state} hint="Com DDD. É por onde a coordenação costuma falar com quem chega.">
+        <input id="whatsapp" name="whatsapp" type="tel" inputMode="tel" autoComplete="tel" maxLength={30} placeholder="(21) 99999-9999" defaultValue={valueOf(state, "whatsapp", "")} className="interest-input" />
+      </Field>
       <div className="join-row">
         <Field label="Curso (opcional)" name="course" state={state}>
           <input id="course" name="course" autoComplete="off" maxLength={120} defaultValue={valueOf(state, "course", "")} className="interest-input" />
