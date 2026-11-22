@@ -91,10 +91,11 @@ const TEMAS: Record<string, string> = {
   universidade: "Universidade",
 };
 
-type PainelAutor = { id?: string; nome?: string; cargo?: string; fotoV?: number };
+type PainelAutor = { id?: string; nome?: string; cargo?: string; cargoOculto?: boolean; fotoV?: number };
 type PainelResumo = { slug: string; titulo: string; linhaFina?: string; tema?: string; publicadoEm: string; minutos?: number; autor?: PainelAutor };
 
-const cargoLiga = (c?: string) => (!c ? "Liga da Juventude Livre" : /liga/i.test(c) ? c : `${c} da Liga da Juventude Livre`);
+// A member can sign with the name only (cargoOculto): then no role and no Liga affiliation is shown.
+const cargoLiga = (a?: PainelAutor) => (a?.cargoOculto ? null : !a?.cargo ? "Liga da Juventude Livre" : /liga/i.test(a.cargo) ? a.cargo : `${a.cargo} da Liga da Juventude Livre`);
 const fotoDe = (a?: PainelAutor) => (a?.id && a.fotoV && /^[a-z0-9]+$/i.test(a.id) ? `${PAINEL_URL}/api/foto/m-${a.id}?v=${a.fotoV}` : null);
 
 const fromPainel = (a: PainelResumo, autor?: PainelAutor): PublicArticle => ({
@@ -102,7 +103,7 @@ const fromPainel = (a: PainelResumo, autor?: PainelAutor): PublicArticle => ({
   title: a.titulo,
   excerpt: a.linhaFina ?? "",
   author: (autor ?? a.autor)?.nome || "Liga da Juventude Livre",
-  authorRole: cargoLiga((autor ?? a.autor)?.cargo),
+  authorRole: cargoLiga(autor ?? a.autor),
   authorPhoto: fotoDe(autor ?? a.autor),
   date: brasiliaDay(new Date(a.publicadoEm)),
   front: (a.tema && TEMAS[a.tema]) || "Opinião",
